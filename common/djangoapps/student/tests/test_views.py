@@ -369,7 +369,7 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin):
         response = self.client.get(self.path)
         self.assertIn('class="enter-course hidden"', response.content)
         self.assertIn('You must select a session to access the course.', response.content)
-        self.assertIn('<div class="course-entitlement-selection-container ">', response.content)
+        self.assertIn('<div class="course-entitlement-selection-container bootstrap">', response.content)
         self.assertIn('Related Programs:', response.content)
 
     @patch('student.views.get_course_runs_for_course')
@@ -393,7 +393,7 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin):
         response = self.client.get(self.path)
         self.assertIn('class="enter-course hidden"', response.content)
         self.assertIn('You can no longer select a session', response.content)
-        self.assertNotIn('<div class="course-entitlement-selection-container ">', response.content)
+        self.assertNotIn('course-entitlement-selection-container', response.content)
 
     @patch('student.views.get_course_runs_for_course')
     @patch.object(CourseOverview, 'get_from_id')

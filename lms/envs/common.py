@@ -3456,3 +3456,6 @@ ACE_ROUTING_KEY = LOW_PRIORITY_QUEUE
 
 # Initialize to 'unknown', but read from JSON in aws.py
 EDX_PLATFORM_REVISION = 'unknown'
+
+############### Settings for Django Rate limit #####################
+RATELIMIT_ENABLE = True

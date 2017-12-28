@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import json
 import unittest
+import mock
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -10,6 +11,7 @@ from django.test import TestCase
 from edx_oauth2_provider.tests.factories import ClientFactory
 from oauth2_provider.models import Application
 from provider.oauth2.models import AccessToken
+from ratelimit.exceptions import Ratelimited
 from student.tests.factories import UserFactory
 
 from . import mixins
@@ -47,6 +49,19 @@ class ClientCredentialsTest(mixins.AccessTokenMixin, TestCase):
         }
         response = self.client.get(reverse('oauth2:user_info'), **headers)
         self.assertEqual(response.status_code, 200)
+
+    def test_access_token_rate_limit(self):
+        oauth_client = ClientFactory(user=self.user)
+        data = {
+            'grant_type': 'client_credentials',
+            'client_id': oauth_client.client_id,
+            'client_secret': oauth_client.client_secret
+        }
+
+        with mock.patch('openedx.core.djangoapps.oauth_dispatch.views.AccessTokenView.ratelimit_rate', '1/m'):
+            self.client.post(reverse('oauth2:access_token'), data)
+            with self.assertRaises(Ratelimited):
+                self.client.post(reverse('oauth2:access_token'), data)
 
     def test_jwt_access_token(self):
         """ Verify the client credentials grant can be used to obtain a JWT access token. """

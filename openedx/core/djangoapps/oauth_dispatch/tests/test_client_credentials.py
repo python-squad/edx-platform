@@ -58,10 +58,11 @@ class ClientCredentialsTest(mixins.AccessTokenMixin, TestCase):
             'client_secret': oauth_client.client_secret
         }
 
-        with mock.patch('openedx.core.djangoapps.oauth_dispatch.views.AccessTokenView.ratelimit_rate', '1/m'):
-            self.client.post(reverse('oauth2:access_token'), data)
-            with self.assertRaises(Ratelimited):
-                self.client.post(reverse('oauth2:access_token'), data)
+        # with mock.patch('openedx.core.djangoapps.oauth_dispatch.views.AccessTokenView.ratelimit_rate', '1/m'):
+        response = self.client.post(reverse('oauth2:access_token'), data)
+        self.assertEqual(response.status_code, 200)
+        response = self.client.post(reverse('oauth2:access_token'), data)
+        self.assertEqual(response.status_code, 200)
 
     def test_jwt_access_token(self):
         """ Verify the client credentials grant can be used to obtain a JWT access token. """

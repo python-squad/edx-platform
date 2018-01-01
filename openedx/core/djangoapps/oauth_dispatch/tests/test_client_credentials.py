@@ -52,16 +52,23 @@ class ClientCredentialsTest(mixins.AccessTokenMixin, TestCase):
 
     def test_access_token_rate_limit(self):
         oauth_client = ClientFactory(user=self.user)
+        user_2 = UserFactory()
+        oauth_client2 = ClientFactory(user=user_2)
         data = {
             'grant_type': 'client_credentials',
             'client_id': oauth_client.client_id,
             'client_secret': oauth_client.client_secret
         }
+        data_2 = {
+            'grant_type': 'client_credentials',
+            'client_id': oauth_client2.client_id,
+            'client_secret': oauth_client2.client_secret
+        }
 
         # with mock.patch('openedx.core.djangoapps.oauth_dispatch.views.AccessTokenView.ratelimit_rate', '1/m'):
         response = self.client.post(reverse('oauth2:access_token'), data)
         self.assertEqual(response.status_code, 200)
-        response = self.client.post(reverse('oauth2:access_token'), data)
+        response = self.client.post(reverse('oauth2:access_token'), data_2)
         self.assertEqual(response.status_code, 200)
 
     def test_jwt_access_token(self):

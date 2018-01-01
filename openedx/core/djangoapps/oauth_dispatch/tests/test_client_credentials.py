@@ -3,15 +3,15 @@ from __future__ import unicode_literals
 
 import json
 import unittest
-import mock
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.test import TestCase
+from django.test.utils import override_settings
 from edx_oauth2_provider.tests.factories import ClientFactory
 from oauth2_provider.models import Application
 from provider.oauth2.models import AccessToken
-from ratelimit.exceptions import Ratelimited
 from student.tests.factories import UserFactory
 
 from . import mixins
@@ -50,7 +50,9 @@ class ClientCredentialsTest(mixins.AccessTokenMixin, TestCase):
         response = self.client.get(reverse('oauth2:user_info'), **headers)
         self.assertEqual(response.status_code, 200)
 
+    @override_settings(RATELIMIT_RATE='1/m')
     def test_access_token_rate_limit(self):
+        cache.clear()
         oauth_client = ClientFactory(user=self.user)
         user_2 = UserFactory()
         oauth_client2 = ClientFactory(user=user_2)

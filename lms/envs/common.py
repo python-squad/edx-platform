@@ -3459,3 +3459,4 @@ EDX_PLATFORM_REVISION = 'unknown'
 
 ############### Settings for Django Rate limit #####################
 RATELIMIT_ENABLE = True
+RATELIMIT_RATE = '30/m'

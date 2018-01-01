@@ -92,7 +92,7 @@ class AccessTokenView(RatelimitMixin, _DispatchingView):
     dot_view = dot_views.TokenView
     dop_view = dop_views.AccessTokenView
     ratelimit_key = 'ip'
-    ratelimit_rate = '1/m'
+    ratelimit_rate = settings.RATELIMIT_RATE
     ratelimit_block = True
     ratelimit_method = ALL
 

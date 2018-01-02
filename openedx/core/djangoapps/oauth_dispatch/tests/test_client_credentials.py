@@ -5,10 +5,8 @@ import json
 import unittest
 
 from django.conf import settings
-from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.test import TestCase
-from django.test.utils import override_settings
 from edx_oauth2_provider.tests.factories import ClientFactory
 from oauth2_provider.models import Application
 from provider.oauth2.models import AccessToken
@@ -48,29 +46,6 @@ class ClientCredentialsTest(mixins.AccessTokenMixin, TestCase):
             'HTTP_AUTHORIZATION': 'Bearer ' + access_token
         }
         response = self.client.get(reverse('oauth2:user_info'), **headers)
-        self.assertEqual(response.status_code, 200)
-
-    @override_settings(RATELIMIT_RATE='1/m')
-    def test_access_token_rate_limit(self):
-        cache.clear()
-        oauth_client = ClientFactory(user=self.user)
-        user_2 = UserFactory()
-        oauth_client2 = ClientFactory(user=user_2)
-        data = {
-            'grant_type': 'client_credentials',
-            'client_id': oauth_client.client_id,
-            'client_secret': oauth_client.client_secret
-        }
-        data_2 = {
-            'grant_type': 'client_credentials',
-            'client_id': oauth_client2.client_id,
-            'client_secret': oauth_client2.client_secret
-        }
-
-        # with mock.patch('openedx.core.djangoapps.oauth_dispatch.views.AccessTokenView.ratelimit_rate', '1/m'):
-        response = self.client.post(reverse('oauth2:access_token'), data)
-        self.assertEqual(response.status_code, 200)
-        response = self.client.post(reverse('oauth2:access_token'), data_2)
         self.assertEqual(response.status_code, 200)
 
     def test_jwt_access_token(self):

@@ -134,6 +134,17 @@ class IDTokenTest(BaseTestMixin, IDTokenTestCase):
         _scopes, claims = self.get_id_token_values('openid profile permissions')
         self.assertTrue(claims['administrator'])
 
+    @override_settings(RATELIMIT_RATE='1/m')
+    def test_rate_limit_token(self):
+        response = self.get_access_token_response('openid profile permissions')
+        self.assertEqual(response.status_code, 200)
+
+        self.user.is_staff = True
+        self.user.save()
+        response = self.get_access_token_response('openid profile permissions')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 403)
+
 
 class UserInfoTest(BaseTestMixin, UserInfoTestCase):
     def setUp(self):

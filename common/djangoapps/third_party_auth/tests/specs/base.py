@@ -66,7 +66,7 @@ class IntegrationTestMixin(object):
         provider_response = self.do_provider_login(try_login_response['Location'])
         # We should be redirected to the register screen since this account is not linked to an edX account:
         self.assertEqual(provider_response.status_code, 302)
-        self.assertEqual(provider_response['Location'], expected_redirect_url(self.register_page_url, hostname='example.none'))
+        self.assertEqual(provider_response['Location'], expected_redirect_url(self.register_page_url, hostname=self.hostname))
         register_response = self.client.get(self.register_page_url)
         tpa_context = register_response.context["data"]["third_party_auth"]
         self.assertEqual(tpa_context["errorMessage"], None)
@@ -96,7 +96,7 @@ class IntegrationTestMixin(object):
         continue_response = self.client.get(tpa_context["finishAuthUrl"])
         # And we should be redirected to the dashboard:
         self.assertEqual(continue_response.status_code, 302)
-        self.assertEqual(continue_response['Location'], expected_redirect_url(reverse('dashboard'), hostname='example.none'))
+        self.assertEqual(continue_response['Location'], expected_redirect_url(reverse('dashboard'), hostname=self.hostname))
 
         # Now check that we can login again, whether or not we have yet verified the account:
         self.client.logout()
@@ -117,7 +117,7 @@ class IntegrationTestMixin(object):
         complete_response = self.do_provider_login(try_login_response['Location'])
         # We should be redirected to the login screen since this account is not linked to an edX account:
         self.assertEqual(complete_response.status_code, 302)
-        self.assertEqual(complete_response['Location'], expected_redirect_url(self.login_page_url, hostname='example.none'))
+        self.assertEqual(complete_response['Location'], expected_redirect_url(self.login_page_url, hostname=self.hostname))
         login_response = self.client.get(self.login_page_url)
         tpa_context = login_response.context["data"]["third_party_auth"]
         self.assertEqual(tpa_context["errorMessage"], None)
@@ -134,7 +134,7 @@ class IntegrationTestMixin(object):
         continue_response = self.client.get(tpa_context["finishAuthUrl"])
         # And we should be redirected to the dashboard:
         self.assertEqual(continue_response.status_code, 302)
-        self.assertEqual(continue_response['Location'], expected_redirect_url(reverse('dashboard'), hostname='example.none'))
+        self.assertEqual(continue_response['Location'], expected_redirect_url(reverse('dashboard'), hostname=self.hostname))
 
         # Now check that we can login again:
         self.client.logout()
@@ -163,7 +163,7 @@ class IntegrationTestMixin(object):
         # required to set the login cookie (it sticks around if the main session times out):
         if not previous_session_timed_out:
             self.assertEqual(login_response.status_code, 302)
-            expected_url = expected_redirect_url(self.complete_url, hostname='example.none')
+            expected_url = expected_redirect_url(self.complete_url, hostname=self.hostname)
             # TODO: Remove Django 1.11 upgrade shim
             # SHIM: Get rid of this logic post-upgrade
             if django.VERSION >= (1, 9):
@@ -176,7 +176,7 @@ class IntegrationTestMixin(object):
             url_expected = reverse('dashboard')
         else:
             url_expected = reverse('third_party_inactive_redirect') + '?next=' + reverse('dashboard')
-        self.assertEqual(login_response['Location'], expected_redirect_url(url_expected, hostname='example.none'))
+        self.assertEqual(login_response['Location'], expected_redirect_url(url_expected, hostname=self.hostname))
         # Now we are logged in:
         dashboard_response = self.client.get(reverse('dashboard'))
         self.assertEqual(dashboard_response.status_code, 200)

@@ -136,7 +136,7 @@ class TestShibIntegrationTest(SamlIntegrationTestUtilities, IntegrationTestMixin
         try_login_response = self.client.get(testshib_login_url)
         # The user should be redirected to back to the login page:
         self.assertEqual(try_login_response.status_code, 302)
-        self.assertEqual(try_login_response['Location'], expected_redirect_url(self.login_page_url, hostname='example.none'))
+        self.assertEqual(try_login_response['Location'], expected_redirect_url(self.login_page_url, hostname=self.hostname))
         # When loading the login page, the user will see an error message:
         response = self.client.get(self.login_page_url)
         self.assertEqual(response.status_code, 200)

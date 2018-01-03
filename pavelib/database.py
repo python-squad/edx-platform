@@ -56,13 +56,34 @@ def update_bokchoy_db_cache():
 @timed
 def update_local_bokchoy_db_from_s3():
     """
-    Update the MYSQL database for bokchoy testing:
-    * Determine if your current cache files are up to date
-      with all the migrations
-    * If not then check if there is a copy up at s3
-    * If so then download then extract it
-    * Otherwise apply migrations as usual and push the new cache
-      files to s3
+    Prepare the local MYSQL test database for running bokchoy tests. Since
+    most pull requests do not introduce migrations, this task provides
+    an optimization for caching the state of the db when migrations are
+    added into a bucket in s3. Subsequent commits can avoid rerunning
+    migrations by using the cache files from s3, until the local cache files
+    are updated by running the `update_bokchoy_db_cache` Paver task, and
+    committing the updated cache files to github.
+
+    Steps:
+    1. Determine which migrations, if any, need to be applied to your current
+       db cache files to make them up to date
+    2. Compute the sha1 fingerprint of the local db cache files and the output
+       of the migration
+    3a. If the fingerprint computed in step 2 is equal to the local
+        fingerprint file, load the cache files into the MYSQL test database
+    3b. If the fingerprints are not equal, but there is bucket matching the
+        fingerprint computed in step 2, download and extract the contents of
+        bucket (db cache files) and load them into the MYSQL test database
+    3c. If the fingerprints are not equal AND there is no bucket matching the
+        fingerprint computed in step 2, load the local db cache files into
+        the MYSQL test database and apply any needed migrations. Create a
+        bucket in s3 named the fingerprint computed in step 2 and push the
+        newly updated db cache files to the bucket.
+
+    NOTE: the computed fingerprints referenced in this and related functions
+    represent the state of the db cache files and migration output PRIOR
+    to running migrations. The corresponding s3 bucket named for a given
+    fingerprint contains the db cache files AFTER applying migrations
     """
     fingerprint = fingerprint_bokchoy_db_files(MIGRATION_OUTPUT_FILES, ALL_DB_FILES)
 

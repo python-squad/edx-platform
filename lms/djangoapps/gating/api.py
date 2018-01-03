@@ -76,4 +76,6 @@ def get_entrance_exam_score_ratio(course_grade, exam_chapter_key):
     except KeyError:
         earned, possible = 0.0, 0.0
         log.warning(u'Gating: Unexpectedly failed to find chapter_grade for %s.', exam_chapter_key)
-    return _calculate_ratio(earned, possible)
+    # Replace this with course_grade.chapter_percentage() once following PR lands
+    # https://github.com/edx/edx-platform/pull/16837
+    return float(earned) / float(possible) if possible else 0.0

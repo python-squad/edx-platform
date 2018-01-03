@@ -15,6 +15,7 @@ from opaque_keys.edx.locator import BlockUsageLocator
 from openedx.core.lib.gating.exceptions import GatingValidationError
 from util import milestones_helpers
 from xmodule.modulestore.django import modulestore
+from xmodule.modulestore.exceptions import ItemNotFoundError
 
 log = logging.getLogger(__name__)
 
@@ -367,17 +368,21 @@ def compute_is_prereq_met(content_id, user_id, recalc_on_unmet=False):
     milestone = unfulfilled_milestones[0]
     student = User.objects.get(id=user_id)
     store = modulestore()
-
+    
     with store.bulk_operations(course_id):
         subsection_usage_key = UsageKey.from_string(_get_gating_block_id(milestone))
         subsection = store.get_item(subsection_usage_key)
         prereq_meta_info = {
-            'url': reverse('jump_to', kwargs={'course_id': course_id, 'location': subsection_usage_key}),
+            'url': reverse('jump_to', args=[course_id, subsection_usage_key]),
             'display_name': subsection.display_name
         }
 
         if not subsection.visible_to_staff_only:
-            subsection_structure = get_course_blocks(student, subsection_usage_key)
+            try:
+                subsection_structure = get_course_blocks(student, subsection_usage_key)
+            except ItemNotFoundError:
+                return prereq_met, prereq_meta_info
+
             subsection_grade_factory = SubsectionGradeFactory(student, course_structure=subsection_structure)
             if subsection_usage_key in subsection_structure:
                 # this will force a recalcuation of the subsection grade

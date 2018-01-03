@@ -199,18 +199,15 @@ class TestGatingApi(ModuleStoreTestCase, MilestonesTestCaseMixin):
                 Mock(location=self.seq1.location),
                 student,
             )
+            self.assertFalse(gating_api.is_gate_fulfilled(self.course.id, self.seq1.location, student.id))
 
-        self.assertFalse(gating_api.is_gate_fulfilled(self.course.id, self.seq1.location, student.id))
-
-        with patch.object(gating_api, '_get_subsection_percentage') as mock_grade:
             mock_grade.return_value = 100
             lms_gating_api.evaluate_prerequisite(
                 self.course,
                 Mock(location=self.seq1.location),
                 student,
             )
-
-        self.assertTrue(gating_api.is_gate_fulfilled(self.course.id, self.seq1.location, student.id))
+            self.assertTrue(gating_api.is_gate_fulfilled(self.course.id, self.seq1.location, student.id))
 
     def test_compute_is_prereq_met(self):
         """

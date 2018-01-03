@@ -87,6 +87,10 @@ class TestPaverDatabaseTasks(MockS3Mixin, TestCase):
         conn = boto.connect_s3()
         conn.create_bucket('moto_test_bucket')
         self.bucket = conn.get_bucket('moto_test_bucket')
+        # This value is the actual sha1 fingerprint calculated for the dummy
+        # files used in these tests
+        self.expected_fingerprint = 'ccaa8d8dcc7d030cd6a6768db81f90d0ef976c3d'
+        self.fingerprint_filename = '{}.tar.gz'.format(self.expected_fingerprint)
 
     @patch.object(db_utils, 'CACHE_FOLDER', mkdtemp())
     @patch.object(db_utils, 'FINGERPRINT_FILEPATH', os.path.join(mkdtemp(), 'fingerprint'))
@@ -102,11 +106,13 @@ class TestPaverDatabaseTasks(MockS3Mixin, TestCase):
         _write_temporary_db_cache_files(db_utils.CACHE_FOLDER, database.ALL_DB_FILES)
         # write the local fingerprint file with the same value than the
         # computed fingerprint
-        expected_fingerprint = 'ccaa8d8dcc7d030cd6a6768db81f90d0ef976c3d'
         with open(db_utils.FINGERPRINT_FILEPATH, 'w') as fingerprint_file:
-            fingerprint_file.write(expected_fingerprint)
+            fingerprint_file.write(self.expected_fingerprint)
 
-        database.update_local_bokchoy_db_from_s3()
+        with patch.object(db_utils, 'get_file_from_s3', wraps=db_utils.get_file_from_s3) as _mock_get_file:
+            database.update_local_bokchoy_db_from_s3()
+            # Make sure that the local cache files are used - NOT downloaded from s3
+            self.assertFalse(_mock_get_file.called)
         calls = [
             call('{}/scripts/calculate-bokchoy-migrations.sh'.format(Env.REPO_ROOT)),
             call('{}/scripts/reset-test-db.sh'.format(Env.REPO_ROOT))
@@ -129,13 +135,11 @@ class TestPaverDatabaseTasks(MockS3Mixin, TestCase):
         _write_temporary_db_cache_files(db_utils.CACHE_FOLDER, database.ALL_DB_FILES)
 
         # zip the temporary files and push them to a moto s3 bucket
-        expected_fingerprint = 'ccaa8d8dcc7d030cd6a6768db81f90d0ef976c3d'
-        zipfile_name = '{}.tar.gz'.format(expected_fingerprint)
-        zipfile_path = os.path.join(db_utils.CACHE_FOLDER, zipfile_name)
+        zipfile_path = os.path.join(db_utils.CACHE_FOLDER, self.fingerprint_filename)
         with tarfile.open(name=zipfile_path, mode='w:gz') as tar_file:
             for name in database.ALL_DB_FILES:
                 tar_file.add(os.path.join(db_utils.CACHE_FOLDER, name), arcname=name)
-        key = boto.s3.key.Key(bucket=self.bucket, name=zipfile_name)
+        key = boto.s3.key.Key(bucket=self.bucket, name=self.fingerprint_filename)
         key.set_contents_from_filename(zipfile_path, replace=False)
 
         # write the local fingerprint file with a different value than
@@ -144,7 +148,12 @@ class TestPaverDatabaseTasks(MockS3Mixin, TestCase):
         with open(db_utils.FINGERPRINT_FILEPATH, 'w') as fingerprint_file:
             fingerprint_file.write(local_fingerprint)
 
-        database.update_local_bokchoy_db_from_s3()
+        with patch.object(db_utils, 'get_file_from_s3', wraps=db_utils.get_file_from_s3) as _mock_get_file:
+            database.update_local_bokchoy_db_from_s3()
+            # Make sure that the fingerprint file is downloaded from s3
+            _mock_get_file.assert_called_once_with(
+                'moto_test_bucket', self.fingerprint_filename, db_utils.CACHE_FOLDER
+            )
         calls = [
             call('{}/scripts/calculate-bokchoy-migrations.sh'.format(Env.REPO_ROOT)),
             call('{}/scripts/reset-test-db.sh'.format(Env.REPO_ROOT))
@@ -200,5 +209,4 @@ class TestPaverDatabaseTasks(MockS3Mixin, TestCase):
             fingerprint_file.write(local_fingerprint)
 
         database.update_local_bokchoy_db_from_s3()
-        key_name = 'ccaa8d8dcc7d030cd6a6768db81f90d0ef976c3d.tar.gz'
-        self.assertTrue(self.bucket.get_key(key_name))
+        self.assertTrue(self.bucket.get_key(self.fingerprint_filename))

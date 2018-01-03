@@ -1,6 +1,8 @@
 """ Tests for rendering functions in the mako pipeline. """
 
 from unittest import skipUnless
+import os
+import logging
 
 import ddt
 from django.conf import settings
@@ -9,6 +11,7 @@ from paver.easy import call_task
 
 from pipeline_mako import compressed_css, compressed_js, render_require_js_path_overrides
 
+log = logging.getLogger("test_render")
 
 class RequireJSPathOverridesTest(TestCase):
     """Test RequireJS path overrides. """
@@ -50,6 +53,12 @@ class PipelineRenderTest(TestCase):
         """
         super(PipelineRenderTest, cls).setUpClass()
         call_task('pavelib.prereqs.install_node_prereqs')
+        log.info("Contents of current working directory (%s) post-node-prereq-install:", os.getcwd())
+        for name in os.listdir('.'):
+            log.info(name)
+        log.info("Contents of node_modules:")
+        for name in os.listdir('node_modules'):
+            log.info(name)
         call_task('pavelib.assets.update_assets', args=('lms', '--settings=test', '--themes=no'))
 
     @skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in LMS')

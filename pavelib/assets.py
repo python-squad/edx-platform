@@ -650,7 +650,9 @@ def process_npm_assets():
                 vendor_dir=vendor_dir,
             ))
         elif not skip_if_missing:
-            raise Exception('Missing vendor file {library_path}'.format(library_path=library_path))
+            raise Exception('Missing vendor file {cwd}/{library_path}'.format(
+                cwd=os.getcwd(), library_path=library_path)
+            )
 
     # Skip processing of the libraries if this is just a dry run
     if tasks.environment.dry_run:

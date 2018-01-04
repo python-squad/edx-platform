@@ -1,10 +1,12 @@
 """
 Tests for the gating API
 """
+import unittest
 
 from mock import patch, Mock
 from nose.plugins.attrib import attr
 from ddt import ddt, data
+from django.conf import settings
 from lms.djangoapps.gating import api as lms_gating_api
 from milestones.tests.utils import MilestonesTestCaseMixin
 from milestones import api as milestones_api
@@ -208,6 +210,7 @@ class TestGatingApi(ModuleStoreTestCase, MilestonesTestCaseMixin):
             )
             self.assertTrue(gating_api.is_gate_fulfilled(self.course.id, self.seq1.location, student.id))
 
+    @unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in lms')
     def test_compute_is_prereq_met(self):
         """
         Test if prereq has been met and force recompute

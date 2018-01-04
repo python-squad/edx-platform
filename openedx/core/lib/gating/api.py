@@ -374,7 +374,7 @@ def compute_is_prereq_met(content_id, user_id, recalc_on_unmet=False):
         subsection_usage_key = UsageKey.from_string(_get_gating_block_id(milestone))
         subsection = store.get_item(subsection_usage_key)
         prereq_meta_info = {
-            'url': reverse('jump_to', urlconf='lms.urls', kwargs={'course_id': course_id, 'location': subsection_usage_key}),
+            'url': reverse('jump_to', kwargs={'course_id': course_id, 'location': subsection_usage_key}),
             'display_name': subsection.display_name
         }
 

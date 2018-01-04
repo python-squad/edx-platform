@@ -1,0 +1,63 @@
+#upsell-modal {
+  .Button__btn.Button__btn-secondary {
+    display: none !important;
+  }
+
+  .Button__btn.Button__btn-success {
+    font-weight: 100 !important;
+    line-height: 0.25 !important;
+    font-size: initial !important;
+    float: left !important;
+  }
+
+  .Button__btn.Button__btn-light {
+    line-height: 0.25 !important;
+    font-weight: 600 !important;
+  }
+
+  .Modal__modal-title {
+    font-weight: 600 !important;
+  }
+
+  .Modal__modal-title::before {
+    content: "NEW" !important;
+    font-size: small !important;
+    margin-right: 10px !important;
+    color: blue !important;
+  }
+
+  .Modal__modal-footer {
+    display: inline-block !important;
+  }
+}
+
+.Button__btn.Button__btn-secondary {
+  display: none !important;
+}
+
+.Button__btn.Button__btn-success {
+  font-weight: 100 !important;
+  line-height: 0.25 !important;
+  font-size: initial !important;
+  float: left !important;
+}
+
+.Button__btn.Button__btn-light {
+  line-height: 0.25 !important;
+  font-weight: 600 !important;
+}
+
+.Modal__modal-title {
+  font-weight: 600 !important;
+}
+
+.Modal__modal-title::before {
+  content: "NEW" !important;
+  font-size: small !important;
+  margin-right: 10px !important;
+  color: blue !important;
+}
+
+.Modal__modal-footer {
+  display: inline-block !important;
+}

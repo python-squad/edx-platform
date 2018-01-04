@@ -374,21 +374,20 @@ def compute_is_prereq_met(content_id, user_id, recalc_on_unmet=False):
         subsection_usage_key = UsageKey.from_string(_get_gating_block_id(milestone))
         subsection = store.get_item(subsection_usage_key)
         prereq_meta_info = {
-            'url': reverse('jump_to', args=[course_id, subsection_usage_key]),
+            'url': reverse('jump_to', urlconf='lms.urls', kwargs={'course_id': course_id, 'location': subsection_usage_key}),
             'display_name': subsection.display_name
         }
 
         if not subsection.visible_to_staff_only:
             try:
                 subsection_structure = get_course_blocks(student, subsection_usage_key)
-            except ItemNotFoundError:
-                return prereq_met, prereq_meta_info
-
-            subsection_grade_factory = SubsectionGradeFactory(student, course_structure=subsection_structure)
-            if subsection_usage_key in subsection_structure:
-                # this will force a recalcuation of the subsection grade
-                subsection_grade = subsection_grade_factory.update(subsection_structure[subsection_usage_key], persist_grade=False)
-                prereq_met = update_milestone(milestone, subsection_grade, milestone, user_id)
+                subsection_grade_factory = SubsectionGradeFactory(student, course_structure=subsection_structure)
+                if subsection_usage_key in subsection_structure:
+                    # this will force a recalcuation of the subsection grade
+                    subsection_grade = subsection_grade_factory.update(subsection_structure[subsection_usage_key], persist_grade=False)
+                    prereq_met = update_milestone(milestone, subsection_grade, milestone, user_id)
+            except ItemNotFoundError as err:
+                log.warning("Could not find course_block for subsection=%s error=%s", subsection_usage_key, err)
 
     return prereq_met, prereq_meta_info
 

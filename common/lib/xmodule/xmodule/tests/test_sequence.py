@@ -211,7 +211,6 @@ class SequenceBlockTestCase(XModuleXmlImportTest):
         self.assertIn("'next_url': 'NextSequential'", html)
         self.assertIn("'prev_url': 'PrevSequential'", html)
 
-
     def _assert_ungated(self, html, sequence):
         """
         Assert sequence is not gated
@@ -238,7 +237,7 @@ class SequenceBlockTestCase(XModuleXmlImportTest):
             False,
             {'url': 'PrereqUrl', 'display_name': 'PrereqSectionName'}
         ]
-        self.sequence_1_2.xmodule_runtime._services['gating'] = gating_mock_1_2 # pylint: disable=protected-access
+        self.sequence_1_2.xmodule_runtime._services['gating'] = gating_mock_1_2  # pylint: disable=protected-access
         self.sequence_1_2.display_name = 'sequence_1_2'
 
         html = self._get_rendered_student_view(

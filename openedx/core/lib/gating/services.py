@@ -21,7 +21,7 @@ class GatingService(object):
         Returns:
             tuple: True|False,
             prereq_meta_info = { 'url': prereq_url|None, 'display_name': prereq_name|None}
-        """       
+        """
         return gating_api.compute_is_prereq_met(content_id, user_id, recalc_on_unmet)
 
     def is_prereq_required(self, course_key, content_key, relationship):
@@ -44,12 +44,12 @@ class GatingService(object):
         has any unfulfilled milestones.
 
         Arguments:
-            course_key (CourseUsageLocator): Course locator 
+            course_key (CourseUsageLocator): Course locator
             gating_content_key (BlockUsageLocator): The locator for the section content
             user_id: The id of the user
 
         Returns:
-            Returns True if section has no unfufilled milestones or is not a prerequiste. 
+            Returns True if section has no unfufilled milestones or is not a prerequiste.
             Returns False otherwise
         """
         return gating_api.is_gate_fulfilled(course_key, gating_content_key, user_id)

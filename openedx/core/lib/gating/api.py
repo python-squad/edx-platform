@@ -335,6 +335,7 @@ def is_gate_fulfilled(course_key, gating_content_key, user_id):
     ]
     return not unfulfilled_milestones
 
+
 def compute_is_prereq_met(content_id, user_id, recalc_on_unmet=False):
     """
     Returns true if the prequiste has been met for a given milestone.
@@ -368,7 +369,7 @@ def compute_is_prereq_met(content_id, user_id, recalc_on_unmet=False):
     milestone = unfulfilled_milestones[0]
     student = User.objects.get(id=user_id)
     store = modulestore()
-    
+
     with store.bulk_operations(course_id):
         subsection_usage_key = UsageKey.from_string(_get_gating_block_id(milestone))
         subsection = store.get_item(subsection_usage_key)
@@ -390,6 +391,7 @@ def compute_is_prereq_met(content_id, user_id, recalc_on_unmet=False):
                 prereq_met = update_milestone(milestone, subsection_grade, milestone, user_id)
 
     return prereq_met, prereq_meta_info
+
 
 def update_milestone(milestone, subsection_grade, prereq_milestone, user_id):
     """
@@ -413,11 +415,13 @@ def update_milestone(milestone, subsection_grade, prereq_milestone, user_id):
         milestones_helpers.remove_user_milestone({'id': user_id}, prereq_milestone)
         return False
 
+
 def _get_gating_block_id(milestone):
     """
     Return the block id of the gating milestone
     """
     return milestone.get('namespace', '').replace(GATING_NAMESPACE_QUALIFIER, '')
+
 
 def _get_minimum_required_percentage(milestone):
     """

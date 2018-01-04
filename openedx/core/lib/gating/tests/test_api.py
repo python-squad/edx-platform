@@ -177,7 +177,6 @@ class TestGatingApi(ModuleStoreTestCase, MilestonesTestCaseMixin):
 
         self.assertEqual(gating_api.get_gated_content(self.course, student), [])
 
-
     def test_is_gate_fulfilled(self):
         """
         Test if prereq section has any unfulfilled milestones

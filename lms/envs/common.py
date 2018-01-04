@@ -2133,7 +2133,6 @@ INSTALLED_APPS = [
     'openedx.core.djangoapps.course_groups',
     'bulk_email',
     'branding',
-    'lms.djangoapps.grades.apps.GradesConfig',
 
     # Signals
     'openedx.core.djangoapps.signals.apps.SignalConfig',
@@ -2341,8 +2340,6 @@ INSTALLED_APPS = [
     'database_fixups',
 
     'openedx.core.djangoapps.waffle_utils',
-    'openedx.core.djangoapps.ace_common.apps.AceCommonConfig',
-    'openedx.core.djangoapps.schedules.apps.SchedulesConfig',
 
     # Course Goals
     'lms.djangoapps.course_goals',
@@ -3462,3 +3459,8 @@ EDX_PLATFORM_REVISION = 'unknown'
 # Once a user has watched this percentage of a video, mark it as complete:
 # (0.0 = 0%, 1.0 = 100%)
 COMPLETION_VIDEO_COMPLETE_PERCENTAGE = 0.95
+
+############## Installed Django Apps #########################
+
+from openedx.core.djangolib.django_plugins import DjangoAppRegistry, ProjectType
+INSTALLED_APPS.extend(DjangoAppRegistry.get_installable_apps(ProjectType.lms))

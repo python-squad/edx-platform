@@ -1318,6 +1318,8 @@ MIDDLEWARE_CLASSES = [
 
     'openedx.core.djangoapps.theming.middleware.CurrentSiteThemeMiddleware',
 
+    'openedx.core.djangoapps.ratelimit.middleware.ReverseProxy',
+
     'waffle.middleware.WaffleMiddleware',
 
     # This must be last

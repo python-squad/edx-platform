@@ -213,7 +213,8 @@ TODO:            and be in the format: "<Subsection Title> (Prerequisite Require
         self.assertEqual(self.course_home_page.outline.num_subsections, 2)
         self.course_home_page.outline.go_to_section('Test Section 1', 'Test Subsection 1')
         self.courseware_page.wait_for_page()
-        self.assertFalse(self.courseware_page.has_banner())
+        # banner displayed informing section is a prereq
+        self.assertTrue(self.courseware_page.has_banner())
 
         self.course_home_page.visit()
         self.course_home_page.preview.set_staff_view_mode_specific_student(self.STUDENT_USERNAME)

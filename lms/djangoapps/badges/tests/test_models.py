@@ -33,6 +33,7 @@ def get_image(name):
 
 
 @attr(shard=1)
+@override_settings(MEDIA_ROOT=TEST_DATA_ROOT)
 class BadgeImageConfigurationTest(TestCase):
     """
     Test the validation features of BadgeImageConfiguration.
@@ -66,6 +67,7 @@ class DummyBackend(object):
     award = Mock()
 
 
+@override_settings(MEDIA_ROOT=TEST_DATA_ROOT)
 class BadgeClassTest(ModuleStoreTestCase):
     """
     Test BadgeClass functionality
@@ -157,7 +159,7 @@ class BadgeClassTest(ModuleStoreTestCase):
         self.assertEqual(badge_class.description, 'This is a test')
         self.assertEqual(badge_class.criteria, 'https://example.com/test_criteria')
         self.assertEqual(badge_class.display_name, 'Super Badge')
-        self.assertEqual(badge_class.image.name.rsplit('/', 1)[-1], 'good.png')
+        self.assertTrue('good' in badge_class.image.name.rsplit('/', 1)[-1])
 
     def test_get_badge_class_nocreate(self):
         """

@@ -362,15 +362,16 @@ class StudentAccountLoginAndRegistrationTest(ThirdPartyAuthTestMixin, UrlResetMi
         self._assert_third_party_auth_data(response, None, None, [], None)
 
     @mock.patch('student_account.views.enterprise_customer_for_request')
+    @mock.patch('openedx.core.djangoapps.user_api.api.enterprise_customer_for_request')
     @ddt.data(
-        ("signin_user", None, None, None),
-        ("register_user", None, None, None),
-        ("signin_user", "google-oauth2", "Google", None),
-        ("register_user", "google-oauth2", "Google", None),
-        ("signin_user", "facebook", "Facebook", None),
-        ("register_user", "facebook", "Facebook", None),
-        ("signin_user", "dummy", "Dummy", None),
-        ("register_user", "dummy", "Dummy", None),
+        ("signin_user", None, None, None, False),
+        ("register_user", None, None, None, False),
+        ("signin_user", "google-oauth2", "Google", None, False),
+        ("register_user", "google-oauth2", "Google", None, False),
+        ("signin_user", "facebook", "Facebook", None, False),
+        ("register_user", "facebook", "Facebook", None, False),
+        ("signin_user", "dummy", "Dummy", None, False),
+        ("register_user", "dummy", "Dummy", None, False),
         (
             "signin_user",
             "google-oauth2",
@@ -379,7 +380,8 @@ class StudentAccountLoginAndRegistrationTest(ThirdPartyAuthTestMixin, UrlResetMi
                 'name': 'FakeName',
                 'logo': 'https://host.com/logo.jpg',
                 'welcome_msg': 'No message'
-            }
+            },
+            True
         )
     )
     @ddt.unpack
@@ -389,7 +391,9 @@ class StudentAccountLoginAndRegistrationTest(ThirdPartyAuthTestMixin, UrlResetMi
             current_backend,
             current_provider,
             expected_enterprise_customer_mock_attrs,
-            enterprise_customer_mock
+            add_user_details,
+            enterprise_customer_mock_1,
+            enterprise_customer_mock_2
     ):
         params = [
             ('course_id', 'course-v1:Org+Course+Run'),
@@ -400,24 +404,26 @@ class StudentAccountLoginAndRegistrationTest(ThirdPartyAuthTestMixin, UrlResetMi
         ]
 
         if expected_enterprise_customer_mock_attrs:
-            expected_ec = mock.MagicMock(
-                branding_configuration=mock.MagicMock(
-                    logo=mock.MagicMock(
-                        url=expected_enterprise_customer_mock_attrs['logo']
-                    ),
-                    welcome_message=expected_enterprise_customer_mock_attrs['welcome_msg']
-                )
-            )
-            expected_ec.name = expected_enterprise_customer_mock_attrs['name']
+            expected_ec = {
+                'name': expected_enterprise_customer_mock_attrs['name'],
+                'branding_configuration': {
+                    'logo': 'https://host.com/logo.jpg',
+                    'welcome_message': expected_enterprise_customer_mock_attrs['welcome_msg']
+                }
+            }
         else:
             expected_ec = None
 
-        enterprise_customer_mock.return_value = expected_ec
+        email = None
+        if add_user_details:
+            email = 'test@test.com'
+        enterprise_customer_mock_1.return_value = expected_ec
+        enterprise_customer_mock_2.return_value = expected_ec
 
         # Simulate a running pipeline
         if current_backend is not None:
             pipeline_target = "student_account.views.third_party_auth.pipeline"
-            with simulate_running_pipeline(pipeline_target, current_backend):
+            with simulate_running_pipeline(pipeline_target, current_backend, email=email):
                 response = self.client.get(reverse(url_name), params, HTTP_ACCEPT="text/html")
 
         # Do NOT simulate a running pipeline
@@ -456,7 +462,8 @@ class StudentAccountLoginAndRegistrationTest(ThirdPartyAuthTestMixin, UrlResetMi
             current_backend,
             current_provider,
             expected_providers,
-            expected_ec
+            expected_ec,
+            add_user_details
         )
 
     def _configure_testshib_provider(self, provider_name, idp_slug):
@@ -482,11 +489,6 @@ class StudentAccountLoginAndRegistrationTest(ThirdPartyAuthTestMixin, UrlResetMi
             'signin_user',
             'tpa-saml',
             'TestShib',
-            {
-                'name': 'FakeName',
-                'logo': 'https://host.com/logo.jpg',
-                'welcome_msg': 'No message'
-            }
         )
     )
     @ddt.unpack
@@ -495,7 +497,6 @@ class StudentAccountLoginAndRegistrationTest(ThirdPartyAuthTestMixin, UrlResetMi
             url_name,
             current_backend,
             current_provider,
-            expected_enterprise_customer_mock_attrs,
             enterprise_customer_mock,
     ):
         params = []
@@ -506,15 +507,6 @@ class StudentAccountLoginAndRegistrationTest(ThirdPartyAuthTestMixin, UrlResetMi
         self.enable_saml()
         dummy_idp = 'testshib'
         self._configure_testshib_provider(current_provider, dummy_idp)
-        expected_ec = mock.MagicMock(
-            branding_configuration=mock.MagicMock(
-                logo=mock.MagicMock(
-                    url=expected_enterprise_customer_mock_attrs['logo']
-                ),
-                welcome_message=expected_enterprise_customer_mock_attrs['welcome_msg']
-            )
-        )
-        expected_ec.name = expected_enterprise_customer_mock_attrs['name']
         enterprise_customer_data = {
             'uuid': '72416e52-8c77-4860-9584-15e5b06220fb',
             'name': 'Dummy Enterprise',
@@ -541,20 +533,12 @@ class StudentAccountLoginAndRegistrationTest(ThirdPartyAuthTestMixin, UrlResetMi
 
         expected_error_message = Text(_(
             u'We are sorry, you are not authorized to access {platform_name} via this channel. '
-            u'Please contact your {enterprise} administrator in order to access {platform_name} '
-            u'or contact {edx_support_link}.{line_break}'
-            u'{line_break}'
+            u'Please contact your learning administrator or manager in order to access {platform_name}.'
+            u'{line_break}{line_break}'
             u'Error Details:{line_break}{error_message}')
         ).format(
             platform_name=settings.PLATFORM_NAME,
-            enterprise=enterprise_customer_data['name'],
             error_message=dummy_error_message,
-            edx_support_link=HTML(
-                '<a href="{edx_support_url}">{support_url_name}</a>'
-            ).format(
-                edx_support_url=settings.SUPPORT_SITE_LINK,
-                support_url_name=_('edX Support'),
-            ),
             line_break=HTML('<br/>')
         )
         self._assert_saml_auth_data_with_error(
@@ -739,7 +723,8 @@ class StudentAccountLoginAndRegistrationTest(ThirdPartyAuthTestMixin, UrlResetMi
 
         self.assertEqual(resp['X-Frame-Options'], 'ALLOW')
 
-    def _assert_third_party_auth_data(self, response, current_backend, current_provider, providers, expected_ec):
+    def _assert_third_party_auth_data(self, response, current_backend, current_provider, providers, expected_ec,
+                                      add_user_details=False):
         """Verify that third party auth info is rendered correctly in a DOM data attribute. """
         finish_auth_url = None
         if current_backend:
@@ -753,6 +738,7 @@ class StudentAccountLoginAndRegistrationTest(ThirdPartyAuthTestMixin, UrlResetMi
             "errorMessage": None,
             "registerFormSubmitButtonText": "Create Account",
             "syncLearnerProfileData": False,
+            "pipeline_user_details": {"email": "test@test.com"} if add_user_details else None
         }
         if expected_ec is not None:
             # If we set an EnterpriseCustomer, third-party auth providers ought to be hidden.
@@ -782,6 +768,7 @@ class StudentAccountLoginAndRegistrationTest(ThirdPartyAuthTestMixin, UrlResetMi
             'errorMessage': expected_error_message,
             'registerFormSubmitButtonText': 'Create Account',
             'syncLearnerProfileData': False,
+            'pipeline_user_details': {'response': {'idp_name': 'testshib'}}
         }
         auth_info = dump_js_escaped_json(auth_info)
 
